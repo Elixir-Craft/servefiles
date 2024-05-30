@@ -123,8 +123,11 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 	// ioutil.WriteFile("../cert/ca.pem", caPEM.Bytes(), 0644)
 	// ioutil.WriteFile("../cert/ca-key.pem", caPrivKeyPEM.Bytes(), 0644)
 
-	os.WriteFile("cert.pem", certPEM.Bytes(), 0644)
-	os.WriteFile("key.pem", certPrivKeyPEM.Bytes(), 0644)
+	// create directory if it does not exist
+	os.Mkdir("cert", 0755)
+
+	os.WriteFile("cert/cert.pem", certPEM.Bytes(), 0644)
+	os.WriteFile("cert/key.pem", certPrivKeyPEM.Bytes(), 0644)
 
 	return
 }

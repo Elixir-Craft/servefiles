@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	CertFilePath = "cert.pem"
-	KeyFilePath  = "key.pem"
+	CertFilePath = "cert/cert.pem"
+	KeyFilePath  = "cert/key.pem"
 )
 
 func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
