@@ -1,0 +1,30 @@
+version: '1.0'
+
+services:
+  https-server:
+    hostname: https-server
+    build: .
+    volumes:
+      - ./:/app
+    ports:
+      - "6501:4443"
+    networks:
+      - https-network
+
+  test:
+    hostname: https-server-test
+    container_name: https-server-test
+    image: curlimages/curl:latest
+
+    networks:
+      - https-network
+
+    # entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl && curl -k https://https-server:4443 && sleep infinity"]
+    entrypoint: ["/bin/sh", "-c", " sleep infinity"]
+
+    depends_on:
+      - https-server
+
+networks:
+  https-network:
+    driver: bridge

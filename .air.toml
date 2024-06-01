@@ -1,0 +1,26 @@
+# .air.toml
+
+# Config file for Air.
+# You can find more examples at https://github.com/cosmtrek/air#configuration-file
+
+[build]
+# cmd is the command to build your project.
+cmd = "go build -o ./tmp/main ./https-server"
+# bin is the binary file that will be executed.
+bin = "./tmp/main"
+# full_bin is the full path of the binary file.
+# full_bin = "/Users/xxx/go/xxx/tmp/main"
+# delay is the duration to wait before restarting the application.
+delay = 200
+# exclude_dir is the list of directories to be excluded from watching.
+exclude_dir = ["tmp", "vendor"]
+# include_ext is the list of file extensions to be included in watching.
+include_ext = ["go", "tpl", "tmpl", "html"]
+# exclude_file is the list of files to be excluded from watching.
+exclude_file = ["*flymake", "ginkgo", "delta", "golden"]
+# follow_symlink configures whether to follow symlink or not.
+follow_symlink = true
+# allow_edit configures whether allow edit `.air` conf file or not.
+allow_edit = true
+# root_dir is the root directory for the app
+root_dir = "."
