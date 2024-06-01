@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directory Listing</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        ul { list-style-type: none; }
+        li { margin: 5px 0; }
+        a { text-decoration: none; color: blue; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Directory Listing</h1>
+    <ul>
+        {{range .Files}}
+        <li>
+            {{if .IsDir}}
+                <a href="{{$.CurrentPath}}{{.Name}}/">{{.Name}}/</a>
+            {{else}}
+                <a href="{{$.CurrentPath}}{{.Name}}">{{.Name}}</a>
+            {{end}}
+        </li>
+        {{else}}
+        <li><em>No files or directories found.</em></li>
+        {{end}}
+    </ul>
+</body>
+</html>
