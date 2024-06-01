@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,6 +15,10 @@ var (
 )
 
 func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
+
+	// show terminal output
+	fmt.Println("Received request from", req.RemoteAddr)
+
 	w.Write([]byte("Hello,World!\n"))
 }
 func main() {
@@ -33,6 +38,10 @@ func main() {
 		Handler:   http.HandlerFunc(httpRequestHandler),
 		TLSConfig: tlsConfig,
 	}
+
+	// start the server show terminal output
+	fmt.Println("Server is running on https://localhost:4443")
+
 	defer server.Close()
 	log.Fatal(server.ListenAndServeTLS("", ""))
 }
