@@ -7,12 +7,15 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net"
 	"os"
 
 	"crypto/x509/pkix"
 	"math/big"
 	"time"
+
+	"github.com/Elixir-Craft/https-server/localip"
 )
 
 func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err error) {
@@ -64,6 +67,12 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
 	})
 
+	localIPs, err := localip.Get()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
@@ -74,7 +83,8 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 			StreetAddress: []string{"Golden Gate Bridge"},
 			PostalCode:    []string{"94016"},
 		},
-		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		// IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback , localip.Get()},
+		IPAddresses:  append([]net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback}, localIPs...),
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
