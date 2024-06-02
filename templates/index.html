@@ -4,23 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Directory Listing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; }
-        ul { list-style-type: none; }
-        li { margin: 5px 0; }
-        a { text-decoration: none; color: blue; }
-        a:hover { text-decoration: underline; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        li:hover {
+            background-color: #f1f1f1;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            flex-grow: 1;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .icon {
+            font-size: 18px;
+            width: 20px;
+            margin-right: 10px;
+        }
+        .file {
+            color: #6c757d;
+        }
+        .directory {
+            color: #28a745;
+        }
+        .file-size {
+            margin-left: auto;
+            color: #6c757d;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <h1>Directory Listing</h1>
     <ul>
+
+        <!-- .. -->
+        <li>
+            <i class="fas fa-folder icon directory"></i>
+            <a href="{{.ParentPath}}">../</a>
+        </li>
+
+
+
         {{range .Files}}
         <li>
             {{if .IsDir}}
-                <a href="{{$.CurrentPath}}{{.Name}}/">{{.Name}}/</a>
+                <i class="fas fa-folder icon directory"></i>
+                <a href="{{$.CurrentPath}}{{.Name}}">{{.Name}}/</a>
             {{else}}
+                <i class="fas fa-file icon file"></i>
                 <a href="{{$.CurrentPath}}{{.Name}}">{{.Name}}</a>
+                {{if .Size}}
+                <span class="file-size">{{.Size}}</span>
+                {{end}}
             {{end}}
         </li>
         {{else}}
