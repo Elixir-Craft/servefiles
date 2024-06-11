@@ -76,10 +76,10 @@
         <li>
             {{if .IsDir}}
                 <i class="fas fa-folder icon directory"></i>
-                <a href="{{$.CurrentPath}}{{.Name}}">{{.Name}}/</a>
+                <a href="{{$.CurrentPath}}/{{.Name}}">{{.Name}}/</a>
             {{else}}
                 <i class="fas fa-file icon file"></i>
-                <a href="{{$.CurrentPath}}{{.Name}}">{{.Name}}</a>
+                <a href="{{$.CurrentPath}}/{{.Name}}">{{.Name}}</a>
                 {{if .Size}}
                 <span class="file-size">{{.Size}}</span>
                 {{end}}
