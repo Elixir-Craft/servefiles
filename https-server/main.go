@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Elixir-Craft/https-server/localip"
+
 	"github.com/Elixir-Craft/https-server/certgen"
 )
 
@@ -154,7 +156,17 @@ func main() {
 	}
 
 	// start the server show terminal output
-	fmt.Println("Server is running on https://localhost:4443")
+	// fmt.Println("Server is running on https://localhost:4443")
+	// all ip addresses on the local system
+	ips, err := localip.Get()
+	if err != nil {
+		log.Fatalf("Error getting local IP addresses: %v", err)
+	}
+
+	fmt.Println("Server is running on:")
+	for _, ip := range ips {
+		fmt.Printf(" https://%s:4443\n", ip)
+	}
 
 	defer server.Close()
 	log.Fatal(server.ListenAndServeTLS("", ""))
