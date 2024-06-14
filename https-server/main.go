@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -26,6 +27,13 @@ type FileInfo struct {
 	IsDir bool
 	Size  string
 }
+
+// flags
+var (
+	port            = flag.String("p", "4443", "port to listen on")
+	regenerateCerts = flag.Bool("r", false, "regenerate certificates")
+	password        = flag.String("P", "", "password to access the files")
+)
 
 // DirectoryListing holds the data for the HTML template
 type DirectoryListing struct {
@@ -132,9 +140,58 @@ func fileSize(size int64) string {
 	}
 }
 
+func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Check for a session or a simple cookie to verify if the password was entered correctly
+		if cookie, err := r.Cookie("authenticated"); err != nil || cookie.Value != "true" {
+			if r.Method == "POST" && checkPassword(r.FormValue("password")) {
+				// Set a simple cookie for demonstration purposes (not secure for production)
+				http.SetCookie(w, &http.Cookie{
+					Name:   "authenticated",
+					Value:  "true",
+					Path:   "/",
+					MaxAge: 300, // Expires after 300 seconds
+				})
+				http.Redirect(w, r, r.URL.Path, http.StatusFound)
+				return
+			}
+			servePasswordPrompt(w, r)
+			return
+		}
+		next(w, r)
+	}
+}
+
+func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
+
+	// read the html file
+
+	filepath := "templates/auth.html"
+
+	html, err := os.ReadFile(filepath)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte(html))
+}
+
+func checkPassword(enteredPassword string) bool {
+	return enteredPassword == *password
+}
+
 func main() {
 
-	certgen.Certsetup()
+	flag.Parse()
+
+	// check if the certificates need to be regenerated
+	// already exists or not provided flag
+	if *regenerateCerts || !certgen.CertFilesExist(CertFilePath, KeyFilePath) {
+		certgen.Certsetup()
+	}
+	// certgen.Certsetup()
 	// load tls certificates
 	serverTLSCert, err := tls.LoadX509KeyPair(CertFilePath, KeyFilePath)
 	if err != nil {
@@ -146,11 +203,20 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/files/", fileHandler)
+	// mux.HandleFunc("/files/", fileHandler)
+	// mux.HandleFunc("/files/", passwordProtected(fileHandler))
+
+	// if password is provided then protect the files
+	if *password != "" {
+		mux.HandleFunc("/files/", passwordProtected(fileHandler))
+	} else {
+		mux.HandleFunc("/files/", fileHandler)
+	}
+
 	mux.HandleFunc("/", httpRequestHandler)
 
 	server := http.Server{
-		Addr:      ":4443",
+		Addr:      ":" + *port,
 		Handler:   mux,
 		TLSConfig: tlsConfig,
 	}
@@ -165,7 +231,7 @@ func main() {
 
 	fmt.Println("Server is running on:")
 	for _, ip := range ips {
-		fmt.Printf(" https://%s:4443\n", ip)
+		fmt.Printf(" https://%s:%s\n", ip, *port)
 	}
 
 	defer server.Close()

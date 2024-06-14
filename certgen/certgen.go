@@ -141,3 +141,17 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 
 	return
 }
+
+func CertFilesExist(certFilePath, keyFilePath string) bool {
+	_, err := os.Stat(certFilePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	_, err = os.Stat(keyFilePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
