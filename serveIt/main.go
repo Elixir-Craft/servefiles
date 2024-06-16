@@ -14,12 +14,17 @@ import (
 	"github.com/Elixir-Craft/serveIt/localip"
 
 	"github.com/Elixir-Craft/serveIt/certgen"
+
+	"github.com/Elixir-Craft/serveIt/webtemplates"
 )
 
 var (
-	CertFilePath = "cert/cert.pem"
-	KeyFilePath  = "cert/key.pem"
-	templates    = template.Must(template.ParseFiles("templates/index.html"))
+	CertFilePath  = "cert/cert.pem"
+	KeyFilePath   = "cert/key.pem"
+	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
+	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
+	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
+
 )
 
 type FileInfo struct {
@@ -47,7 +52,11 @@ func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
 	// show terminal output
 	fmt.Println("Received request from", req.RemoteAddr)
 
-	w.Write([]byte("Hello,World!\n"))
+	err := HomeTemplate.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func fileHandler(w http.ResponseWriter, req *http.Request) {
@@ -89,7 +98,8 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 			Files:       fileInfos,
 		}
 
-		err = templates.ExecuteTemplate(w, "index.html", data)
+		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -143,12 +153,13 @@ func fileSize(size int64) string {
 func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check for a session or a simple cookie to verify if the password was entered correctly
-		if cookie, err := r.Cookie("authenticated"); err != nil || cookie.Value != "true" {
+		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
 			if r.Method == "POST" && checkPassword(r.FormValue("password")) {
 				// Set a simple cookie for demonstration purposes (not secure for production)
 				http.SetCookie(w, &http.Cookie{
-					Name:   "authenticated",
-					Value:  "true",
+					Name:   "password",
+					Value:  r.FormValue("password"),
+
 					Path:   "/",
 					MaxAge: 300, // Expires after 300 seconds
 				})
@@ -166,16 +177,12 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 
 	// read the html file
 
-	filepath := "templates/auth.html"
-
-	html, err := os.ReadFile(filepath)
+	err := AuthTemplate.Execute(w, nil)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte(html))
+
 }
 
 func checkPassword(enteredPassword string) bool {
