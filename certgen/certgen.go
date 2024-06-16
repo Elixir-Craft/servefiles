@@ -8,27 +8,110 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"math/big"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
+	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"crypto/x509/pkix"
-	"math/big"
-	"time"
 
 	"github.com/Elixir-Craft/https-server/localip"
 )
 
+// file location by os
+func getConfigFilePath() string {
+	var configDir string
+	var configFileName string
+
+	switch OS := runtime.GOOS; OS {
+	case "windows":
+		// On Windows, use the APPDATA directory
+		configDir = filepath.Join(os.Getenv("APPDATA"), "ServeIt")
+		configFileName = "config.yaml"
+	case "darwin":
+		// On macOS, use the home directory
+		home, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+		configDir = filepath.Join(home, "Library", "Application Support", "ServeIt")
+		configFileName = "config.yaml"
+	default:
+		// On Unix-like systems, use the home directory
+		home, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+		configDir = filepath.Join(home, ".ServeIt")
+		configFileName = "config.yaml"
+	}
+
+	// Create configuration directory if it doesn't exist
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		os.MkdirAll(configDir, 0755)
+	}
+
+	return filepath.Join(configDir, configFileName)
+}
+
+type CertConfig struct {
+	Organization  string `yaml:"organization"`
+	Country       string `yaml:"country"`
+	Province      string `yaml:"province"`
+	Locality      string `yaml:"locality"`
+	StreetAddress string `yaml:"street_address"`
+	PostalCode    string `yaml:"postal_code"`
+}
+
+type Config struct {
+	Cert CertConfig `yaml:"cert"`
+}
+
+func loadConfig() (Config, error) {
+	config := Config{
+		Cert: CertConfig{
+			Organization:  "ServeIt Inc",
+			Country:       "LK",
+			Province:      "",
+			Locality:      "Colombo",
+			StreetAddress: "Main Street",
+			PostalCode:    "00000",
+		},
+	}
+	if _, err := os.Stat(getConfigFilePath()); err == nil {
+		file, err := os.ReadFile(getConfigFilePath())
+		if err != nil {
+			return config, err
+		}
+		err = yaml.Unmarshal(file, &config)
+		if err != nil {
+			return config, err
+		}
+	}
+	fmt.Println(config)
+	return config, nil
+}
+
 func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err error) {
+	config, err := loadConfig()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// set up our CA certificate
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
-			Organization:  []string{"Company, INC."},
-			Country:       []string{"US"},
-			Province:      []string{""},
-			Locality:      []string{"San Francisco"},
-			StreetAddress: []string{"Golden Gate Bridge"},
-			PostalCode:    []string{"94016"},
+			Organization:  []string{config.Cert.Organization},
+			Country:       []string{config.Cert.Country},
+			Province:      []string{config.Cert.Province},
+			Locality:      []string{config.Cert.Locality},
+			StreetAddress: []string{config.Cert.StreetAddress},
+			PostalCode:    []string{config.Cert.PostalCode},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
@@ -39,15 +122,12 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 	}
 
 	// generate a private key for the CA
-
 	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
-
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// create CA
-
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
 		return nil, nil, err
@@ -69,21 +149,19 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 
 	localIPs, err := localip.Get()
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		return nil, nil, err
 	}
 
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
-			Organization:  []string{"Company, INC."},
-			Country:       []string{"US"},
-			Province:      []string{""},
-			Locality:      []string{"San Francisco"},
-			StreetAddress: []string{"Golden Gate Bridge"},
-			PostalCode:    []string{"94016"},
+			Organization:  []string{config.Cert.Organization},
+			Country:       []string{config.Cert.Country},
+			Province:      []string{config.Cert.Province},
+			Locality:      []string{config.Cert.Locality},
+			StreetAddress: []string{config.Cert.StreetAddress},
+			PostalCode:    []string{config.Cert.PostalCode},
 		},
-		// IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback , localip.Get()},
 		IPAddresses:  append([]net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback}, localIPs...),
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
@@ -129,10 +207,6 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 		RootCAs: certpool,
 	}
 
-	// save the certificates to disk
-	// ioutil.WriteFile("../cert/ca.pem", caPEM.Bytes(), 0644)
-	// ioutil.WriteFile("../cert/ca-key.pem", caPrivKeyPEM.Bytes(), 0644)
-
 	// create directory if it does not exist
 	os.Mkdir("cert", 0755)
 
@@ -149,9 +223,7 @@ func CertFilesExist(certFilePath, keyFilePath string) bool {
 	}
 
 	_, err = os.Stat(keyFilePath)
-	if os.IsNotExist(err) {
-		return false
-	}
 
-	return true
+	return err == nil
+
 }
