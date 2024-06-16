@@ -14,12 +14,15 @@ import (
 	"github.com/Elixir-Craft/serveIt/localip"
 
 	"github.com/Elixir-Craft/serveIt/certgen"
+
+	"github.com/Elixir-Craft/serveIt/webtemplates"
 )
 
 var (
-	CertFilePath = "cert/cert.pem"
-	KeyFilePath  = "cert/key.pem"
-	templates    = template.Must(template.ParseFiles("templates/index.html"))
+	CertFilePath  = "cert/cert.pem"
+	KeyFilePath   = "cert/key.pem"
+	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
+	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
 )
 
 type FileInfo struct {
@@ -89,7 +92,7 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 			Files:       fileInfos,
 		}
 
-		err = templates.ExecuteTemplate(w, "index.html", data)
+		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -166,16 +169,11 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 
 	// read the html file
 
-	filepath := "templates/auth.html"
-
-	html, err := os.ReadFile(filepath)
+	err := AuthTemplate.Execute(w, nil)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte(html))
 }
 
 func checkPassword(enteredPassword string) bool {
