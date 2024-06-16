@@ -24,6 +24,7 @@ var (
 	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
 	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
 	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
+
 )
 
 type FileInfo struct {
@@ -55,6 +56,7 @@ func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 }
 
 func fileHandler(w http.ResponseWriter, req *http.Request) {
@@ -97,6 +99,7 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -156,6 +159,7 @@ func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
 				http.SetCookie(w, &http.Cookie{
 					Name:   "password",
 					Value:  r.FormValue("password"),
+
 					Path:   "/",
 					MaxAge: 300, // Expires after 300 seconds
 				})
@@ -177,6 +181,7 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 
 }
 
