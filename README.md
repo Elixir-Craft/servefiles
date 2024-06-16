@@ -1,4 +1,4 @@
-# Https Server
+# serveIt
 
 This is a simple HTTPS server that serves a static files from a directory. 
 

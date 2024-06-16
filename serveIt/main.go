@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Elixir-Craft/https-server/localip"
+	"github.com/Elixir-Craft/serveIt/localip"
 
-	"github.com/Elixir-Craft/https-server/certgen"
+	"github.com/Elixir-Craft/serveIt/certgen"
 )
 
 var (
