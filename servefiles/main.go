@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/Elixir-Craft/servefiles/localip"
 
@@ -24,13 +23,6 @@ var (
 	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
 	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
 	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
-
-	CertFilePath  = "cert/cert.pem"
-	KeyFilePath   = "cert/key.pem"
-	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
-	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
-	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
-
 )
 
 type FileInfo struct {
@@ -57,11 +49,6 @@ func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
 
 	// show terminal output
 	fmt.Println("Received request from", req.RemoteAddr)
-
-	err := HomeTemplate.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 
 	err := HomeTemplate.Execute(w, nil)
 	if err != nil {
@@ -111,8 +98,6 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 
 		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
 
-		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
-
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -120,16 +105,6 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 		// If it's a file, serve it directly
 		http.ServeFile(w, req, path)
 	}
-}
-
-// isImage checks if a file is an image based on its extension
-func isImage(filename string) bool {
-	ext := strings.ToLower(filepath.Ext(filename))
-	switch ext {
-	case ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp":
-		return true
-	}
-	return false
 }
 
 // file size conversion
@@ -167,26 +142,23 @@ func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check for a session or a simple cookie to verify if the password was entered correctly
 		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
-		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
-			if r.Method == "POST" && checkPassword(r.FormValue("password")) {
-				// Set a simple cookie for demonstration purposes (not secure for production)
-				http.SetCookie(w, &http.Cookie{
-					Name:   "password",
-					Value:  r.FormValue("password"),
-
-					Name:   "password",
-					Value:  r.FormValue("password"),
-
-					Path:   "/",
-					MaxAge: 300, // Expires after 300 seconds
-				})
-				http.Redirect(w, r, r.URL.Path, http.StatusFound)
+			if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
+				if r.Method == "POST" && checkPassword(r.FormValue("password")) {
+					// Set a simple cookie for demonstration purposes (not secure for production)
+					http.SetCookie(w, &http.Cookie{
+						Name:   "password",
+						Value:  r.FormValue("password"),
+						Path:   "/",
+						MaxAge: 300, // Expires after 300 seconds
+					})
+					http.Redirect(w, r, r.URL.Path, http.StatusFound)
+					return
+				}
+				servePasswordPrompt(w, r)
 				return
 			}
-			servePasswordPrompt(w, r)
-			return
+			next(w, r)
 		}
-		next(w, r)
 	}
 }
 
@@ -195,13 +167,10 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 	// read the html file
 
 	err := AuthTemplate.Execute(w, nil)
-	err := AuthTemplate.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-
 
 }
 
