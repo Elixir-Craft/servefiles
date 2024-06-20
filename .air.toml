@@ -5,7 +5,7 @@
 
 [build]
 # cmd is the command to build your project.
-cmd = "go build -o ./tmp/main ./serveIt"
+cmd = "go build -o ./tmp/main ./servefiles"
 # bin is the binary file that will be executed.
 bin = "./tmp/main"
 # full_bin is the full path of the binary file.
