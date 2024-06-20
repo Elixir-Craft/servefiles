@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Elixir-Craft/serveIt/localip"
+	"github.com/Elixir-Craft/servefiles/localip"
 
-	"github.com/Elixir-Craft/serveIt/certgen"
+	"github.com/Elixir-Craft/servefiles/certgen"
 
-	"github.com/Elixir-Craft/serveIt/webtemplates"
+	"github.com/Elixir-Craft/servefiles/webtemplates"
 )
 
 var (
