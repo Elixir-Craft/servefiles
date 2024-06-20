@@ -11,14 +11,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Elixir-Craft/serveIt/localip"
+	"github.com/Elixir-Craft/servefiles/localip"
 
-	"github.com/Elixir-Craft/serveIt/certgen"
+	"github.com/Elixir-Craft/servefiles/certgen"
 
-	"github.com/Elixir-Craft/serveIt/webtemplates"
+	"github.com/Elixir-Craft/servefiles/webtemplates"
 )
 
 var (
+	CertFilePath  = "cert/cert.pem"
+	KeyFilePath   = "cert/key.pem"
+	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
+	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
+	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
+
 	CertFilePath  = "cert/cert.pem"
 	KeyFilePath   = "cert/key.pem"
 	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
@@ -51,6 +57,11 @@ func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
 
 	// show terminal output
 	fmt.Println("Received request from", req.RemoteAddr)
+
+	err := HomeTemplate.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	err := HomeTemplate.Execute(w, nil)
 	if err != nil {
@@ -97,6 +108,8 @@ func fileHandler(w http.ResponseWriter, req *http.Request) {
 			ParentPath:  filepath.Dir(req.URL.Path),
 			Files:       fileInfos,
 		}
+
+		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
 
 		err = IndexTemplate.ExecuteTemplate(w, "index.html", data)
 
@@ -154,9 +167,13 @@ func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check for a session or a simple cookie to verify if the password was entered correctly
 		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
+		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
 			if r.Method == "POST" && checkPassword(r.FormValue("password")) {
 				// Set a simple cookie for demonstration purposes (not secure for production)
 				http.SetCookie(w, &http.Cookie{
+					Name:   "password",
+					Value:  r.FormValue("password"),
+
 					Name:   "password",
 					Value:  r.FormValue("password"),
 
@@ -178,9 +195,12 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 	// read the html file
 
 	err := AuthTemplate.Execute(w, nil)
+	err := AuthTemplate.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 
 
 }

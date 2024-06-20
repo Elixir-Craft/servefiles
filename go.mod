@@ -1,4 +1,4 @@
-module github.com/Elixir-Craft/serveIt
+module github.com/Elixir-Craft/servefiles
 
 go 1.22.3
 
