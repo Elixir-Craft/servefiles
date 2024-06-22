@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/color"
+
 	"github.com/Elixir-Craft/servefiles/localip"
 
 	"github.com/Elixir-Craft/servefiles/certgen"
@@ -18,8 +20,8 @@ import (
 )
 
 var (
-	CertFilePath  = "cert/cert.pem"
-	KeyFilePath   = "cert/key.pem"
+	CertFilePath  = certgen.GetConfigDir() + "/cert/cert.pem"
+	KeyFilePath   = certgen.GetConfigDir() + "/cert/key.pem"
 	HomeTemplate  = template.Must(template.New("home.html").Parse(webtemplates.Home))
 	IndexTemplate = template.Must(template.New("index.html").Parse(webtemplates.Index))
 	AuthTemplate  = template.Must(template.New("").Parse(webtemplates.Auth))
@@ -142,23 +144,22 @@ func passwordProtected(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check for a session or a simple cookie to verify if the password was entered correctly
 		if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
-			if cookie, err := r.Cookie("password"); err != nil || !checkPassword(cookie.Value) {
-				if r.Method == "POST" && checkPassword(r.FormValue("password")) {
-					// Set a simple cookie for demonstration purposes (not secure for production)
-					http.SetCookie(w, &http.Cookie{
-						Name:   "password",
-						Value:  r.FormValue("password"),
-						Path:   "/",
-						MaxAge: 300, // Expires after 300 seconds
-					})
-					http.Redirect(w, r, r.URL.Path, http.StatusFound)
-					return
-				}
-				servePasswordPrompt(w, r)
+			if r.Method == "POST" && checkPassword(r.FormValue("password")) {
+				// Set a simple cookie for demonstration purposes (not secure for production)
+				http.SetCookie(w, &http.Cookie{
+					Name:   "password",
+					Value:  r.FormValue("password"),
+					Path:   "/",
+					MaxAge: 3600, // Expires after 3600 seconds
+				})
+				http.Redirect(w, r, r.URL.Path, http.StatusFound)
 				return
 			}
-			next(w, r)
+			servePasswordPrompt(w, r)
+			return
 		}
+		next(w, r)
+
 	}
 }
 
@@ -175,6 +176,7 @@ func servePasswordPrompt(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkPassword(enteredPassword string) bool {
+	fmt.Println("Password check")
 	return enteredPassword == *password
 }
 
@@ -227,8 +229,10 @@ func main() {
 
 	fmt.Println("Server is running on:")
 	for _, ip := range ips {
-		fmt.Printf(" https://%s:%s\n", ip, *port)
+		// fmt.Printf(" https://%s:%s\n", ip, *port)
+		color.Green("https://%s:%s\n", ip, *port)
 	}
+	fmt.Printf("Press Ctrl+C to stop the server\n\n")
 
 	defer server.Close()
 	log.Fatal(server.ListenAndServeTLS("", ""))
