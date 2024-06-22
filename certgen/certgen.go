@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"math/big"
 	"net"
 	"os"
@@ -23,38 +22,39 @@ import (
 )
 
 // file location by os
-func getConfigFilePath() string {
+func GetConfigDir() string {
 	var configDir string
-	var configFileName string
 
 	switch OS := runtime.GOOS; OS {
 	case "windows":
 		// On Windows, use the APPDATA directory
-		configDir = filepath.Join(os.Getenv("APPDATA"), "ServeIt")
-		configFileName = "config.yaml"
+		configDir = filepath.Join(os.Getenv("APPDATA"), "ServeFiles")
 	case "darwin":
 		// On macOS, use the home directory
 		home, err := os.UserHomeDir()
 		if err != nil {
 			panic(err)
 		}
-		configDir = filepath.Join(home, "Library", "Application Support", "ServeIt")
-		configFileName = "config.yaml"
+		configDir = filepath.Join(home, "Library", "Application Support", "ServeFiles")
 	default:
 		// On Unix-like systems, use the home directory
 		home, err := os.UserHomeDir()
 		if err != nil {
 			panic(err)
 		}
-		configDir = filepath.Join(home, ".ServeIt")
-		configFileName = "config.yaml"
+		configDir = filepath.Join(home, ".ServeFiles")
 	}
 
-	// Create configuration directory if it doesn't exist
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		os.MkdirAll(configDir, 0755)
 	}
 
+	return configDir
+}
+
+func getConfigFilePath() string {
+	configDir := GetConfigDir()
+	configFileName := "config.yaml"
 	return filepath.Join(configDir, configFileName)
 }
 
@@ -92,7 +92,7 @@ func loadConfig() (Config, error) {
 			return config, err
 		}
 	}
-	fmt.Println(config)
+	// fmt.Println(config)
 	return config, nil
 }
 
@@ -208,10 +208,13 @@ func Certsetup() (serverTLSConf *tls.Config, clientTLSConf *tls.Config, err erro
 	}
 
 	// create directory if it does not exist
-	os.Mkdir("cert", 0755)
-
-	os.WriteFile("cert/cert.pem", certPEM.Bytes(), 0644)
-	os.WriteFile("cert/key.pem", certPrivKeyPEM.Bytes(), 0644)
+	// os.Mkdir("cert", 0755)
+	os.Mkdir(GetConfigDir()+"/cert", 0755)
+	// fmt.Println(GetConfigDir())
+	// os.WriteFile("cert/cert.pem", certPEM.Bytes(), 0644)
+	// os.WriteFile("cert/key.pem", certPrivKeyPEM.Bytes(), 0644)
+	os.WriteFile(GetConfigDir()+"/cert/cert.pem", certPEM.Bytes(), 0644)
+	os.WriteFile(GetConfigDir()+"/cert/key.pem", certPrivKeyPEM.Bytes(), 0644)
 
 	return
 }
