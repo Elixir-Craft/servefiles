@@ -170,7 +170,7 @@ var Index = `<!DOCTYPE html>
         <!-- .. -->
         <li>
         <span class="icon directory-icon"></span>
-        <a href="{{.ParentPath}}">../</a>
+        <a href="../">../</a>
         </li>
 
 
