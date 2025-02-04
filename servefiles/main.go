@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -62,6 +63,12 @@ func httpRequestHandler(w http.ResponseWriter, req *http.Request) {
 func fileHandler(w http.ResponseWriter, req *http.Request) {
 	// Strip the "/files" prefix from the request URL
 	path := "." + req.URL.Path[len("/files"):]
+	// Decode percent-encoded characters
+	path, err := url.PathUnescape(path)
+	if err != nil {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
 
 	// Check if the path is a directory or a file
 	fileInfo, err := os.Stat(path)
